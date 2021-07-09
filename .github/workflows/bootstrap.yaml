@@ -10,11 +10,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Get Project ID
-        id: get_project
-        run: |
-          echo "::set-output name=id::$(grep project_id common.hcl | cut -d'=' -f2 | tr -d '"')"
-
       - name: Authenticate to GCP
         uses: google-github-actions/setup-gcloud@v0.2.1
         with:
@@ -32,7 +27,7 @@ jobs:
       - name: Deploy _init resources
         id: deploy_init
         run: |
-          terraform apply auto-approve
+          terraform apply -auto-approve
 
       - name: Switch to remote tfstate
         id: switch_tfstate
