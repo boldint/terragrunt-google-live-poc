@@ -18,7 +18,6 @@ jobs:
       - name: Authenticate to GCP
         uses: google-github-actions/setup-gcloud@v0.2.1
         with:
-          project_id: ${{ steps.get_project.outputs.id }}
           service_account_key: ${{ secrets.GCP_SA_KEY }}
           export_default_credentials: true
 
@@ -26,6 +25,7 @@ jobs:
         id: plan_init
         run: |
           pushd _init
+          terraform init
           terraform validate
           terraform plan
 
