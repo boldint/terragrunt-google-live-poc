@@ -7,10 +7,15 @@ jobs:
     name: Bootstrap
     runs-on: ubuntu-latest
     steps:
-      - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@master
+      - name: Get Project ID
+        id: get_project
+        run: |
+          echo "::set-output name=id::$(grep project_id common.hcl | cut -d'=' -f2 | tr -d '"')"
+
+      - name: Authenticate to GCP
+        uses: google-github-actions/setup-gcloud@0.2.1
         with:
-          project_id: ${{ secrets.GCP_PROJECT_ID }}
+          project_id: ${{ steps.get_project.outputs.id }}
           service_account_key: ${{ secrets.GCP_SA_KEY }}
           export_default_credentials: true
 
