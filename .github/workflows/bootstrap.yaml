@@ -22,13 +22,20 @@ jobs:
           pushd _init
           terraform init
           terraform validate
-          terraform plan
+          terraform plan -detailed-exitcode
+        continue-on-error: true
+
+      - name: Fail if Plan _init failed
+        if: steps.plan_init.outputs.exitcode == 1
+        run: exit 1
 
       - name: Deploy _init resources
         id: deploy_init
+        if: steps.plan_init.outputs.exitcode == 2
         run: |
           terraform apply -auto-approve
 
       - name: Switch to remote tfstate
         id: switch_tfstate
+        if: steps.plan_init.outputs.exitcode == 2
         run: terragrunt init --terragrunt-non-interactive -force-copy
