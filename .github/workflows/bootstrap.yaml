@@ -13,7 +13,7 @@ jobs:
           echo "::set-output name=id::$(grep project_id common.hcl | cut -d'=' -f2 | tr -d '"')"
 
       - name: Authenticate to GCP
-        uses: google-github-actions/setup-gcloud@0.2.1
+        uses: google-github-actions/setup-gcloud@v0.2.1
         with:
           project_id: ${{ steps.get_project.outputs.id }}
           service_account_key: ${{ secrets.GCP_SA_KEY }}
