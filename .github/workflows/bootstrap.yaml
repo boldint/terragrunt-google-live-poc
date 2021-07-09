@@ -19,5 +19,18 @@ jobs:
           service_account_key: ${{ secrets.GCP_SA_KEY }}
           export_default_credentials: true
 
-      - name: Use gcloud CLI
-        run: gcloud info
+      - name: Plan _init resources
+        id: plan_init
+        run: |
+          pushd _init
+          terraform validate
+          terraform plan
+
+      - name: Deploy _init resources
+        id: deploy_init
+        run: |
+          terraform apply auto-approve
+
+      - name: Switch to remote tfstate
+        id: switch_tfstate
+        run: terragrunt init --terragrunt-non-interactive -force-copy
