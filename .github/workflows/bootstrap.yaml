@@ -49,17 +49,17 @@ jobs:
         continue-on-error: true
 
       - name: Fail if Plan _init failed
-        if: steps.plan_init.outputs.exitcode == 1
+        if: steps.plan_init.conclusion == success
         run: exit 1
 
       # The following steps will only run if plan has changes
       # and PR/MR was approved!
       - name: Deploy _init resources
         id: deploy_init
-        if: github.event_name == 'push' && steps.plan_init.outputs.exitcode == 2
+        if: github.event_name == 'push' && steps.plan_init.conclusion == success
         run: terraform apply -auto-approve
 
       - name: Switch to remote tfstate
         id: switch_tfstate
-        if: github.event_name == 'push' && steps.plan_init.outputs.exitcode == 2
+        if: github.event_name == 'push' && steps.plan_init.conclusion == success
         run: terragrunt init --terragrunt-non-interactive -force-copy
