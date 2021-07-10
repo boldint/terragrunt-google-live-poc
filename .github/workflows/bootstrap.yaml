@@ -61,9 +61,9 @@ jobs:
       - name: Deploy _init resources
         id: deploy_init
         if: github.event_name == 'push' && (steps.plan_init.conclusion == 'success' && steps.plan_init.outcome == 'failure')
-        run: terraform apply -auto-approve
+        run: terraform -chdir=_init apply -auto-approve
 
       - name: Switch to remote tfstate
         id: switch_tfstate
         if: github.event_name == 'push' && (steps.plan_init.conclusion == 'success' && steps.plan_init.outcome == 'failure')
-        run: terragrunt init --terragrunt-non-interactive -force-copy
+        run: terragrunt init --terragrunt-non-interactive -chdir=_init -force-copy
