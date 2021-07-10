@@ -29,34 +29,41 @@ jobs:
           service_account_key: ${{ secrets.GCP_SA_KEY }}
           export_default_credentials: true
 
-      # The following two steps make sure that a distinction
+      # The following steps make sure that a distinction
       # is made between:
-      #   - a successful plan with changes (exitcode = 2)
-      #   - a successful plan without changes (exitcode = 0)
-      #   - a failed plan (exitcode = 1)
+      #   - a successful plan with changes
+      #       (conclusion = success; outcome = failure)
+      #   - a successful plan without changes
+      #       (conclusion = success; outcome = success)
+      #   - a failed plan
+      #       (conclusion = failure)
       # and that the pipeline stops only if plan fails!
+      - name: Init _init resources
+        id: init_init
+        run: terraform -chdir=_init init
+
+      - name: Validate _init resources
+        id: validate_init
+        run: terraform -chdir=_init validate
+
       - name: Plan _init resources
         id: plan_init
-        run: |
-          pushd _init
-          terraform init
-          terraform validate
-          terraform plan -detailed-exitcode
+        run: terraform -chdir=_init plan -detailed-exitcode
         continue-on-error: true
 
       - name: Fail if Plan _init failed
-        if: steps.plan_init.outputs.exitcode == 1
+        if: steps.plan_init.conclusion == 'failure'
         run: exit 1
 
       # The following steps will only run if plan has changes
-      # and PR/MR was approved!
+      # and PR/MR was approved! Read above comment for
+      # the explanation of conditionals.
       - name: Deploy _init resources
         id: deploy_init
-        if: github.event_name == 'push' && steps.plan_init.outputs.exitcode == 2
-        run: |
-          terraform apply -auto-approve
+        if: github.event_name == 'push' && (steps.plan_init.conclusion == 'success' && steps.plan_init.outcome == 'failure')
+        run: terraform apply -auto-approve
 
       - name: Switch to remote tfstate
         id: switch_tfstate
-        if: github.event_name == 'push' && steps.plan_init.outputs.exitcode == 2
+        if: github.event_name == 'push' && (steps.plan_init.conclusion == 'success' && steps.plan_init.outcome == 'failure')
         run: terragrunt init --terragrunt-non-interactive -force-copy
