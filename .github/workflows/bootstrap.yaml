@@ -65,5 +65,5 @@ jobs:
 
       - name: Switch to remote tfstate
         id: switch_tfstate
-        if: github.event_name == 'push' && && (steps.plan_init.conclusion == 'success' && steps.plan_init.outcome == 'failure')
+        if: github.event_name == 'push' && (steps.plan_init.conclusion == 'success' && steps.plan_init.outcome == 'failure')
         run: terragrunt init --terragrunt-non-interactive -force-copy
