@@ -31,9 +31,12 @@ jobs:
 
       # The following steps make sure that a distinction
       # is made between:
-      #   - a successful plan with changes (exitcode = 2)
-      #   - a successful plan without changes (exitcode = 0)
-      #   - a failed plan (exitcode = 1)
+      #   - a successful plan with changes
+      #       (conclusion = success; outcome = failure)
+      #   - a successful plan without changes
+      #       (conclusion = success; outcome = success)
+      #   - a failed plan
+      #       (conclusion = failure)
       # and that the pipeline stops only if plan fails!
       - name: Init _init resources
         id: init_init
@@ -49,17 +52,18 @@ jobs:
         continue-on-error: true
 
       - name: Fail if Plan _init failed
-        if: steps.plan_init.conclusion == 'success'
+        if: steps.plan_init.conclusion == 'failure'
         run: exit 1
 
       # The following steps will only run if plan has changes
-      # and PR/MR was approved!
+      # and PR/MR was approved! Read above comment for
+      # the explanation of conditionals.
       - name: Deploy _init resources
         id: deploy_init
-        if: github.event_name == 'push' && steps.plan_init.conclusion == 'success'
+        if: github.event_name == 'push' && (steps.plan_init.conclusion == 'success' && steps.plan_init.outcome == 'failure')
         run: terraform apply -auto-approve
 
       - name: Switch to remote tfstate
         id: switch_tfstate
-        if: github.event_name == 'push' && steps.plan_init.conclusion == 'success'
+        if: github.event_name == 'push' && && (steps.plan_init.conclusion == 'success' && steps.plan_init.outcome == 'failure')
         run: terragrunt init --terragrunt-non-interactive -force-copy
