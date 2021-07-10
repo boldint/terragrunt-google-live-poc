@@ -1,6 +1,19 @@
 name: Bootstrap action for GCP project
 
-on: workflow_dispatch
+on:
+  pull_request:
+    branches:
+      - master
+    paths: # Run if only _init folder contents change!
+      - '!**'
+      - '_init/*'
+
+  push:
+    branches:
+      - master
+    paths: # Same as above!
+      - '!**'
+      - '_init/*'
 
 jobs:
   bootstrap_tfc:
@@ -16,6 +29,12 @@ jobs:
           service_account_key: ${{ secrets.GCP_SA_KEY }}
           export_default_credentials: true
 
+      # The following two steps make sure that a distinction
+      # is made between:
+      #   - a successful plan with changes (exitcode = 2)
+      #   - a successful plan without changes (exitcode = 0)
+      #   - a failed plan (exitcode = 1)
+      # and that the pipeline stops only if plan fails!
       - name: Plan _init resources
         id: plan_init
         run: |
@@ -29,13 +48,15 @@ jobs:
         if: steps.plan_init.outputs.exitcode == 1
         run: exit 1
 
+      # The following steps will only run if plan has changes
+      # and PR/MR was approved!
       - name: Deploy _init resources
         id: deploy_init
-        if: steps.plan_init.outputs.exitcode == 2
+        if: github.event_name == 'push' && steps.plan_init.outputs.exitcode == 2
         run: |
           terraform apply -auto-approve
 
       - name: Switch to remote tfstate
         id: switch_tfstate
-        if: steps.plan_init.outputs.exitcode == 2
+        if: github.event_name == 'push' && steps.plan_init.outputs.exitcode == 2
         run: terragrunt init --terragrunt-non-interactive -force-copy
