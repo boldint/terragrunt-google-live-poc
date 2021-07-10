@@ -29,19 +29,23 @@ jobs:
           service_account_key: ${{ secrets.GCP_SA_KEY }}
           export_default_credentials: true
 
-      # The following two steps make sure that a distinction
+      # The following steps make sure that a distinction
       # is made between:
       #   - a successful plan with changes (exitcode = 2)
       #   - a successful plan without changes (exitcode = 0)
       #   - a failed plan (exitcode = 1)
       # and that the pipeline stops only if plan fails!
+      - name: Init _init resources
+        id: init_init
+        run: terraform -chdir=_init init
+
+      - name: Validate _init resources
+        id: validate_init
+        run: terraform -chdir=_init validate
+
       - name: Plan _init resources
         id: plan_init
-        run: |
-          pushd _init
-          terraform init
-          terraform validate
-          terraform plan -detailed-exitcode
+        run: terraform -chdir=_init plan -detailed-exitcode
         continue-on-error: true
 
       - name: Fail if Plan _init failed
@@ -53,8 +57,7 @@ jobs:
       - name: Deploy _init resources
         id: deploy_init
         if: github.event_name == 'push' && steps.plan_init.outputs.exitcode == 2
-        run: |
-          terraform apply -auto-approve
+        run: terraform apply -auto-approve
 
       - name: Switch to remote tfstate
         id: switch_tfstate
