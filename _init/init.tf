@@ -23,8 +23,9 @@ provider "google" {
 ### Resources / Modules
 # Enable all needed service API's
 resource "google_project_service" "project" {
-  for_each = toset(var.enabled_apis)
-  service  = each.key
+  for_each                   = toset(var.enabled_apis)
+  service                    = each.key
+  disable_dependent_services = true
 }
 
 # Create container registry
