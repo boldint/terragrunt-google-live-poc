@@ -12,7 +12,7 @@ enabled_apis = [
   "meshca.googleapis.com",
 #  "stackdriver.googleapis.com",
 #  "gkehub.googleapis.com",
-  "gkeconnect.googleapis.com",
+#  "gkeconnect.googleapis.com",
   "meshconfig.googleapis.com",
   "meshtelemetry.googleapis.com"
 ]
