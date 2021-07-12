@@ -10,9 +10,9 @@ enabled_apis = [
   "sql-component.googleapis.com",
   "storage.googleapis.com",
   "meshca.googleapis.com",
-#  "stackdriver.googleapis.com",
-#  "gkehub.googleapis.com",
-#  "gkeconnect.googleapis.com",
+  "stackdriver.googleapis.com",
+  "gkehub.googleapis.com",
+  "gkeconnect.googleapis.com",
   "meshconfig.googleapis.com",
   "meshtelemetry.googleapis.com"
 ]
