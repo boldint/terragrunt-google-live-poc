@@ -70,7 +70,7 @@ jobs:
       # The following steps will only run if plan has changes
       # and PR/MR was approved! Read above comment for
       # the explanation of conditionals.
-      - name: Deploy _init resources
-        id: deploy_init
+      - name: Terragrunt Apply
+        id: terragrunt_apply
         if: github.event_name == 'push' && steps.plan_init.outputs.exitcode == 2
         run: terragrunt run-all apply --terragrunt-exclude-dir ./_init/ --terragrunt-non-interactive
