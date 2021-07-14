@@ -4,19 +4,17 @@ on:
   pull_request:
     branches:
       - master
-    paths: # Run if only _init folder contents change!
-      - '!**'
+    paths:
       - '_init/*'
 
   push:
     branches:
       - master
-    paths: # Same as above!
-      - '!**'
+    paths:
       - '_init/*'
 
 jobs:
-  bootstrap_tfc:
+  bootstrap_infra:
     name: Bootstrap
     runs-on: ubuntu-latest
     steps:
@@ -43,12 +41,12 @@ jobs:
 
       # The following steps make sure that a distinction
       # is made between:
-      #   - a successful plan with changes
-      #       (conclusion = success; outcome = failure)
-      #   - a successful plan without changes
-      #       (conclusion = success; outcome = success)
-      #   - a failed plan
-      #       (conclusion = failure)
+      #   - a successful plan with changes (job continues)
+      #       (exitcode == 2)
+      #   - a successful plan without changes (job continues)
+      #       (exitcode == 0)
+      #   - a failed plan (job stops)
+      #       (exitcode == 1)
       # and that the pipeline stops only if plan fails!
       - name: Init _init resources
         id: init_init
@@ -60,24 +58,26 @@ jobs:
 
       - name: Plan _init resources
         id: plan_init
-        run: terraform -chdir=_init plan -detailed-exitcode
+        run: |
+          terraform -chdir=_init plan -detailed-exitcode
+          echo "::set-output name=exitcode::$(echo $?)"
         continue-on-error: true
 
       - name: Fail if Plan _init failed
-        if: steps.plan_init.conclusion == 'failure'
+        if: steps.plan_init.outputs.exitcode == 1
         run: exit 1
 
-      # The following steps will only run if plan has changes
-      # and PR/MR was approved! Read above comment for
-      # the explanation of conditionals.
+      # The following steps will only run if plan succeeded
+      # with changes and PR/MR was approved!
+      # Read above comment for the explanation of conditionals.
       - name: Deploy _init resources
         id: deploy_init
-        if: github.event_name == 'push' && (steps.plan_init.conclusion == 'success' && steps.plan_init.outcome == 'failure')
+        if: github.event_name == 'push' && steps.plan_init.outputs.exitcode == 2
         run: terraform -chdir=_init apply -auto-approve
 
       - name: Switch to remote tfstate
         id: switch_tfstate
-        if: github.event_name == 'push' && (steps.plan_init.conclusion == 'success' && steps.plan_init.outcome == 'failure')
+        if: github.event_name == 'push' && steps.plan_init.outputs.exitcode == 2
         run: |
           cd _init/
           terragrunt init --terragrunt-non-interactive -force-copy
