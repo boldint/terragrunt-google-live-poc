@@ -1,38 +1,76 @@
 name: Deploy action for GCP project
 
-on: workflow_dispatch
+on:
+  pull_request:
+    branches:
+      - master
+    paths-ignore:
+      - '_init/*'
+      - '.github/*'
+
+  push:
+    branches:
+      - master
+    paths-ignore:
+      - '_init/*'
+      - '.github/*'
 
 jobs:
-  bootstrap_tfc:
+  deploy_infra:
     name: Deploy
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Get Project ID
-        id: get_project
-        run: |
-          echo "::set-output name=id::$(grep project_id common.hcl | cut -d'=' -f2 | tr -d '"')"
-
-      - name: Authenticate to GCP
-        uses: google-github-actions/setup-gcloud@0.2.1
-        with:
-          project_id: ${{ steps.get_project.outputs.id }}
-          service_account_key: ${{ secrets.GCP_SA_KEY }}
-          export_default_credentials: true
-
       - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v1.3.2
+        uses: hashicorp/setup-terraform@v1
         with:
-          terraform_version: ~1.0.0
+          terraform_version: 0.15.5
 
+      # This following action will need to be ported to
+      # an internal repo or equivalent process
       - name: Setup Terragrunt
         uses: autero1/action-terragrunt@v1.1.0
         with:
-          terragrunt_version: 0.30.8
+          terragrunt_version: 0.29.10
 
+      - name: Authenticate to GCP
+        uses: google-github-actions/setup-gcloud@v0.2.1
+        with:
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          export_default_credentials: true
+
+      # The following steps make sure that a distinction
+      # is made between:
+      #   - a successful plan with changes (job continues)
+      #       (exitcode == 2)
+      #   - a successful plan without changes (job continues)
+      #       (exitcode == 0)
+      #   - a failed plan (job stops)
+      #       (exitcode == 1)
+      # and that the pipeline stops only if plan fails!
       - name: Terragrunt Validate
-        #if: github.event_name == 'pull_request' && steps.terragrunt_num_envs.outputs.number <= 1
+        id: terragrunt_validate
         if: github.event_name == 'pull_request'
         run: terragrunt run-all validate --terragrunt-exclude-dir ./_init/ --terragrunt-non-interactive
+
+      - name: Terragrunt Plan
+        id: terragrunt_plan
+        if: github.event_name == 'pull_request'
+        run: |
+          terragrunt run-all plan --terragrunt-exclude-dir ./_init/ --terragrunt-non-interactive -detailed-exitcode
+          echo "::set-output name=exitcode::$(echo $?)"
+        continue-on-error: true
+
+      - name: Fail if Terragrunt Plan failed
+        if: steps.terragrunt_plan.outputs.exitcode == 1
+        run: exit 1
+
+      # The following steps will only run if plan has changes
+      # and PR/MR was approved! Read above comment for
+      # the explanation of conditionals.
+      - name: Terragrunt Apply
+        id: terragrunt_apply
+        if: github.event_name == 'push' && steps.plan_init.outputs.exitcode == 2
+        run: terragrunt run-all apply --terragrunt-exclude-dir ./_init/ --terragrunt-non-interactive

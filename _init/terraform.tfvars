@@ -8,6 +8,7 @@ enabled_apis = [
   "container.googleapis.com",
   "pubsub.googleapis.com",
   "sql-component.googleapis.com",
+  "sqladmin.googleapis.com",
   "storage.googleapis.com",
   "meshca.googleapis.com",
   "stackdriver.googleapis.com",
