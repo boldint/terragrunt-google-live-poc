@@ -52,12 +52,10 @@ jobs:
       # and that the pipeline stops only if plan fails!
       - name: Terragrunt Validate
         id: terragrunt_validate
-        if: github.event_name == 'pull_request'
         run: terragrunt run-all validate --terragrunt-exclude-dir ./_init/ --terragrunt-non-interactive
 
       - name: Terragrunt Plan
         id: terragrunt_plan
-        if: github.event_name == 'pull_request'
         run: |
           terragrunt run-all plan --terragrunt-exclude-dir ./_init/ --terragrunt-non-interactive -detailed-exitcode
           echo "::set-output name=exitcode::$(echo $?)"
