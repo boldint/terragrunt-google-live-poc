@@ -29,7 +29,8 @@ jobs:
           terraform_version: 0.15.5
 
       # This following action will need to be ported to
-      # an internal repo or equivalent process
+      # an internal repo or equivalent process, for enhanced
+      # control.
       - name: Setup Terragrunt
         uses: autero1/action-terragrunt@v1.1.0
         with:
