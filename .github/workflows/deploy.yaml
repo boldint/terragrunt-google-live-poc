@@ -5,15 +5,15 @@ on:
     branches:
       - master
     paths-ignore:
-      - '_init/*'
-      - '.github/*'
+      - '_init/**'
+      - '.github/**'
 
   push:
     branches:
       - master
     paths-ignore:
-      - '_init/*'
-      - '.github/*'
+      - '_init/**'
+      - '.github/**'
 
 jobs:
   deploy_infra:
