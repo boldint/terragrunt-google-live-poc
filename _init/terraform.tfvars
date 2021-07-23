@@ -15,5 +15,6 @@ enabled_apis = [
   "gkehub.googleapis.com",
   "gkeconnect.googleapis.com",
   "meshconfig.googleapis.com",
-  "meshtelemetry.googleapis.com"
+  "meshtelemetry.googleapis.com",
+  "secretmanager.googleapis.com"
 ]
